@@ -1,7 +1,3 @@
-/**
- * todo: high score, backed by localStorage
- */
-
 class Game extends Grid {
     // constants for representing game entities
     EMPTY = 0;
@@ -28,7 +24,7 @@ class Game extends Grid {
         // set initial background
         for (let x = 0; x < this.columns; x += 1) {
             for (let y = 0; y < this.rows; y += 1) {
-                nextState[x][y] = 0;
+                nextState[x][y] = this.EMPTY;
             }
         }
 
@@ -68,6 +64,8 @@ class Game extends Grid {
         window.addEventListener('touchstart', this.onTouchStart.bind(this));
         window.addEventListener('touchend', this.onTouchEnd.bind(this));
 
+        document.querySelector('#play').addEventListener('click', this.reset.bind(this));
+
         // update loop
         this.interval = window.setInterval(this.update.bind(this), 30);
 
@@ -85,14 +83,53 @@ class Game extends Grid {
             );
         }
 
-        const highScores = JSON.parse(localStorage.getItem('highScores'));
+        this.renderHighScores();
+    }
 
-        // populate high score list
-        document.querySelector('#high_scores').innerHTML = `<ol>
-        ${highScores.map(({ score, timestamp }) => {
-            return `<li>${score} &mdash; ${new Date(timestamp).toLocaleString()}</li>`;
-        })}
-        </ol>`;
+    reset() {
+        let nextState = this.displayStateCopy();
+
+        // set initial background
+        for (let x = 0; x < this.columns; x += 1) {
+            for (let y = 0; y < this.rows; y += 1) {
+                nextState[x][y] = this.EMPTY;
+            }
+        }
+
+        // set up initial snake position
+        this.snake = {
+            position: [
+                { x: 25, y: 25 }, // this is the "head" of the snake
+                { x: 24, y: 25 },
+                { x: 23, y: 25 },
+                { x: 22, y: 25 }
+            ],
+            direction: 'right'
+        };
+
+        // draw the snaaake
+        this.snake.position.forEach(({ x, y }) => {
+            nextState[x][y] = this.SNAKE;
+        });
+
+        // create some random APPLES
+        for (let i = 0; i < 10; i += 1) {
+            nextState = this.makeApple(nextState);
+        }
+
+        // do initial draw
+        this.render(nextState);
+
+        // reset score
+        this.score = 0;
+        this.updateScore(0);
+
+        // hide menu
+        document.querySelector('#menu').style = 'display: none;';
+
+        if (!this.interval) {
+            this.interval = window.setInterval(this.update.bind(this), 30);
+        }
     }
 
     makeApple(displayState) {
@@ -216,7 +253,7 @@ class Game extends Grid {
                 break;
         }
 
-        // handle screen wrap 
+        // handle screen wrap
         if (newSnakeHead.x < 0) {
             newSnakeHead.x = this.rows - 1;
         }
@@ -235,31 +272,7 @@ class Game extends Grid {
 
         // check for body collision
         if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
-            window.alert('u lose');
-
-            // load high scores from local storage; they're stored as a stringified array
-            let highScores = JSON.parse(localStorage.getItem('highScores'));
-
-            // TODO: just push obj on to `highScores` array then call Array.sort()
-            let insertIndex = highScores.findIndex(({ score, timestamp }) => {
-                return this.score >= score;
-            });
-
-            // sorted insert, w/ date
-            highScores.splice(insertIndex, 1, { score: this.score, timestamp: Date.now() });
-
-            // only save top 5
-            highScores = highScores.slice(0, 4);
-
-            // save high scores
-            localStorage.setItem('highScores', JSON.stringify(highScores));
-
-            // stop the update loop
-            clearInterval(this.interval);
-
-            // TODO: unset the keyboard/touch handlers; display menu
-
-            return;
+            this.gameOver();
         }
 
         // clear snake's current position
@@ -301,6 +314,28 @@ class Game extends Grid {
         this.render(nextDisplayState);
     }
 
+    gameOver() {
+        // load high scores from local storage; they're stored as a stringified array
+        let highScores = JSON.parse(localStorage.getItem('highScores'));
+
+        highScores.push({ score: this.score, timestamp: Date.now() }); // insert new high score
+        highScores.sort((a, b) => a.score < b.score); // sort
+        highScores.splice(5); // only keep top 5
+
+        // save the results
+        localStorage.setItem('highScores', JSON.stringify(highScores));
+
+        // re-display high scores
+        this.renderHighScores();
+
+        // stop the update loop
+        clearInterval(this.interval);
+        this.interval = undefined;
+
+        // display menu
+        document.querySelector('#menu').style = 'display: block;';
+    }
+
     updateScore(val) {
         if (this.score === undefined) {
             this.score = 0;
@@ -309,5 +344,16 @@ class Game extends Grid {
         this.score += val;
 
         document.querySelector('#scoreboard').textContent = this.score;
+    }
+
+    renderHighScores() {
+        const highScores = JSON.parse(localStorage.getItem('highScores'));
+
+        // populate high score list
+        document.querySelector('#high_scores').innerHTML = `<ol>
+        ${highScores.map(({ score, timestamp }) => {
+            return `<li>${score} &mdash; ${new Date(timestamp).toLocaleString()}</li>`;
+        }).join('')}
+        </ol>`;
     }
 };
