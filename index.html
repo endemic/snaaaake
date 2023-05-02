@@ -72,7 +72,7 @@
         window.addEventListener('keydown', this.onKeyDown);
 
         // update loop every second
-        this.interval = setInterval(this.update, 100);
+        this.interval = setInterval(this.update, 50);
       }
 
       makeApple(cells) {
@@ -90,28 +90,31 @@
       }
 
       ArrowLeft() {
-        console.log('left arrow pressed; TODO something?');
-        // can't go left if currently going right
-
-        this.snake.direction = 'left';
+        // can't go the opposite direction, or else you'd immediately crash
+        if (this.snake.direction !== 'right') {
+          this.snake.direction = 'left';
+        }
       }
 
       ArrowRight() {
-        console.log('right arrow pressed; TODO something?');
-
-        this.snake.direction = 'right';
+        // can't go the opposite direction, or else you'd immediately crash
+        if (this.snake.direction !== 'left') {
+          this.snake.direction = 'right';
+        }
       }
 
       ArrowUp() {
-        console.log('up arrow pressed; TODO something?');
-
-        this.snake.direction = 'up';
+        // can't go the opposite direction, or else you'd immediately crash
+        if (this.snake.direction !== 'down') {
+          this.snake.direction = 'up';
+        }
       }
 
       ArrowDown() {
-        console.log('down arrow pressed; TODO something?');
-
-        this.snake.direction = 'down';
+        // can't go the opposite direction, or else you'd immediately crash
+        if (this.snake.direction !== 'up') {
+          this.snake.direction = 'down';
+        }
       }
 
       dumpState() {
@@ -135,9 +138,6 @@
       update() {
         let cells = [...this.state.cells]; // shallow clone
 
-        // clear snake's current position
-        this.snake.position.forEach(index => cells[index] = 0);
-
         // find next position
         let newSnakeHeadIndex;
 
@@ -156,8 +156,6 @@
             break;
         }
 
-        // TODO: check for body collision
-
         // handle screen wrap
         if (newSnakeHeadIndex > this.rowCount * this.columnCount) {
           newSnakeHeadIndex -= this.rowCount * this.columnCount;
@@ -166,6 +164,19 @@
         if (newSnakeHeadIndex < 0) {
           newSnakeHeadIndex += this.rowCount * this.columnCount;
         }
+
+        // check for body collision
+        if (cells[newSnakeHeadIndex] === 1) {
+          window.alert('u lose');
+
+          // stop the update loop
+          clearInterval(this.interval);
+
+          return;
+        }
+
+        // clear snake's current position
+        this.snake.position.forEach(index => cells[index] = 0);
 
         // check for apple collision
         if (cells[newSnakeHeadIndex] === 2) {
