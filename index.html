@@ -39,15 +39,15 @@
       box-sizing: border-box;
     }
 
-    .black {
+    .empty {
       background-color: black;
     }
 
-    .green {
+    .snake {
       background-color: limegreen;
     }
 
-    .red {
+    .apple {
       background-color: red;
     }
 
@@ -76,9 +76,9 @@
         // this map translates the numbers to a string, that can then be used as
         // human-readable reference or CSS class (for display purposes)
         this.valueMap = {
-          0: 'black',
-          1: 'green',
-          2: 'red'
+          0: 'empty',
+          1: 'snake',
+          2: 'apple'
         };
 
         this.rowCount = 50;
