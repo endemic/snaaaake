@@ -2,6 +2,12 @@
 
 <head>
   <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
     .board {
       display: grid;
       aspect-ratio: 1;
@@ -9,6 +15,16 @@
       grid-template-rows: repeat(50, 1%);
       grid-template-columns: repeat(50, 1%);
       /* The repeat() notation accepts 2 arguments: the first represents the number of times the defined tracks should repeat, and the second is the track definition. */
+    }
+
+    .scoreboard {
+      border: 1px solid white;
+      color: white;
+      font-family: monospace;
+      font-weight: bold;
+      left: 0;
+      position: absolute;
+      top: 0;
     }
 
     .cell {
@@ -38,6 +54,10 @@
     // Initialize htm with Preact
     const html = htm.bind(h);
 
+    /**
+     * todo: points, high score, touch control
+     */
+
     class Game extends Component {
 
       constructor(props) {
@@ -60,6 +80,8 @@
         for (let i = 0; i < 10; i += 1) {
           cells = this.makeApple(cells);
         }
+
+        this.score = 0;
 
         // set initial state
         this.state = { cells };
@@ -184,6 +206,8 @@
           // so the snake grows
           this.snake.position.unshift(newSnakeHeadIndex);
 
+          this.score += 1;
+
           // make a new apple
           cells = this.makeApple(cells);
         } else {
@@ -208,6 +232,7 @@
       render() {
         return html`<div class="game">
               <${Board} cells=${this.state.cells} onClick=${this.onClick} />
+              <${Scoreboard} score=${this.score} />
           </div>`;
       }
     };
@@ -229,6 +254,10 @@
     const Cell = props => {
       return html`<div class="cell ${props.color}" />`;
     };
+
+    const Scoreboard = props => {
+      return html`<div class="scoreboard">${props.score}</div>`;
+    }
 
     render(html`<${Game} />`, document.body);
   </script>
