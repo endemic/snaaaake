@@ -15,6 +15,13 @@
      */
 
     class Game extends Grid {
+      // constants for representing game entities
+      EMPTY = 0;
+      SNAKE = 1;
+      APPLE = 2;
+
+      // translate those numbers back to human-readable format
+      // to use for styling
       cssClassMap = {
         0: 'empty',
         1: 'snake',
@@ -68,14 +75,13 @@
       makeApple(cells) {
         let rando = Math.floor(Math.random() * this.columns * this.rows);
 
-        // ensure placement in empty spot
-        while (cells[rando] !== 0) {
+        // if the random spot is not empty, choose another until it _is_ empty
+        while (cells[rando] !== this.EMPTY) {
           rando = Math.floor(Math.random() * this.columns * this.rows);
         }
 
         // place the apple
-        // TODO: can we get rid of this magic number?
-        cells[rando] = 2;
+        cells[rando] = this.APPLE;
 
         return cells;
       }
@@ -187,8 +193,7 @@
         }
 
         // check for body collision
-        // TODO: can we get rid of this magic number
-        if (cells[newSnakeHeadIndex] === 1) {
+        if (cells[newSnakeHeadIndex] === this.SNAKE) {
           window.alert('u lose');
 
           // stop the update loop
@@ -198,10 +203,10 @@
         }
 
         // clear snake's current position
-        this.snake.position.forEach(index => cells[index] = 0);
+        this.snake.position.forEach(index => cells[index] = this.EMPTY);
 
         // check for apple collision
-        if (cells[newSnakeHeadIndex] === 2) {
+        if (cells[newSnakeHeadIndex] === this.APPLE) {
           // if the snake eats an apple, turn the apple into the new "head"
           // so the snake grows
           this.snake.position.unshift(newSnakeHeadIndex);
@@ -222,7 +227,7 @@
         }
 
         // draw the snaaake
-        this.snake.position.forEach(index => cells[index] = 1);
+        this.snake.position.forEach(index => cells[index] = this.SNAKE);
 
         // update display
         this.render(cells);
