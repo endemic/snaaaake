@@ -125,8 +125,7 @@
         // do initial draw
         this.render(nextState);
 
-        this.score = 0;
-        this.renderScore();
+        this.updateScore(0);
 
         // bind context variable to the current Game() object
         // for each of these global handlers/interval
@@ -151,6 +150,7 @@
         }
 
         // place the apple
+        // TODO: can we get rid of this magic number?
         cells[rando] = 2;
 
         return cells;
@@ -264,6 +264,7 @@
         }
 
         // check for body collision
+        // TODO: can we get rid of this magic number
         if (cells[newSnakeHeadIndex] === 1) {
           window.alert('u lose');
 
@@ -282,8 +283,7 @@
           // so the snake grows
           this.snake.position.unshift(newSnakeHeadIndex);
 
-          this.score += 1;
-          this.renderScore();
+          this.updateScore(1);
 
           // make a new apple
           cells = this.makeApple(cells);
@@ -305,7 +305,13 @@
         this.render(cells);
       }
 
-      renderScore() {
+      updateScore(val) {
+        if (this.score === undefined) {
+          this.score = 0;
+        }
+
+        this.score += val;
+
         document.querySelector('.scoreboard').textContent = this.score;
       }
 
