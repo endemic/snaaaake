@@ -11,7 +11,7 @@
     .board {
       display: grid;
       aspect-ratio: 1;
-      width: 100%;
+      width: 50%;
       /* The repeat() notation accepts 2 arguments: the first represents the
         number of times the defined tracks should repeat, and the second is 
         the track definition. */
@@ -32,32 +32,27 @@
       top: 0;
     }
 
-    .cell {
+    .board>div {
       border: 1px solid black;
       border-top: 0;
       border-left: 0;
       box-sizing: border-box;
     }
 
-    .cell.black {
+    .black {
       background-color: black;
     }
 
-    .cell.green {
+    .green {
       background-color: limegreen;
     }
 
-    .cell.red {
+    .red {
       background-color: red;
     }
 
   </style>
   <script type="module">
-    import { h, Component, render } from 'https://unpkg.com/preact?module';
-    import htm from 'https://unpkg.com/htm?module';
-
-    // Initialize htm with Preact
-    const html = htm.bind(h);
 
     /**
      * todo: high score, get rid of Preact?
@@ -75,48 +70,69 @@
      * `prevTime = now`
      */
 
-    class Game extends Component {
-      constructor(props) {
-        super(props);
+    class Game {
+      constructor() {
+        // our grid contains simple integers to represent game objects;
+        // this map translates the numbers to a string, that can then be used as
+        // human-readable reference or CSS class (for display purposes)
+        this.valueMap = {
+          0: 'black',
+          1: 'green',
+          2: 'red'
+        };
 
         this.rowCount = 50;
         this.columnCount = 50;
 
-        let cells = Array(this.rowCount * this.columnCount).fill(0);
+        // set initial board state as empty
+        this.state = Array(this.rowCount * this.columnCount).fill(null);
 
+        // set up DOM references
+        let boardRef = document.querySelector('section.board');
+        this.gridRef = [];
+
+        this.state.forEach(i => {
+          let node = document.createElement('div');
+          this.gridRef.push(node);
+          boardRef.appendChild(node);
+        });
+
+        let nextState = [...this.state];
+
+        // set initial background
+        nextState.fill(0);
+
+        // set up initial snake position
         this.snake = {
           position: [1275, 1274, 1273, 1272],
           direction: 'right'
         };
 
         // draw the snaaake
-        this.snake.position.forEach(index => cells[index] = 1);
+        this.snake.position.forEach(index => nextState[index] = 1);
 
         // create some random APPLES
         for (let i = 0; i < 10; i += 1) {
-          cells = this.makeApple(cells);
+          nextState = this.makeApple(nextState);
         }
+
+        // do initial draw
+        this.render(nextState);
 
         this.score = 0;
 
-        // set initial state
-        this.state = { cells };
+        // bind context variable to the current Game() object
+        // for each of these global handlers/interval
 
-        // bind context variable to the current object
-        this.update = this.update.bind(this);
-        this.onKeyDown = this.onKeyDown.bind(this);
-        this.onTouchStart = this.onTouchStart.bind(this);
-        this.onTouchEnd = this.onTouchEnd.bind(this);
+        // add global keyboard handler
+        window.addEventListener('keydown', this.onKeyDown.bind(this));
 
-        // bind global keyboard handler
-        window.addEventListener('keydown', this.onKeyDown);
-
-        // handle touch events
-        window.addEventListener('touchstart', this.onTouchStart);
-        window.addEventListener('touchend', this.onTouchEnd);
+        // add touch event handler
+        window.addEventListener('touchstart', this.onTouchStart.bind(this));
+        window.addEventListener('touchend', this.onTouchEnd.bind(this));
 
         // update loop every second
-        this.interval = setInterval(this.update, 50);
+        this.interval = window.setInterval(this.update.bind(this), 50);
       }
 
       makeApple(cells) {
@@ -164,7 +180,7 @@
       dumpState() {
         for (let row = 0; row < this.rowCount; row += 1) {
           // TODO: console.table?
-          console.log(this.state.cells.slice(row * this.columnCount, row * this.columnCount + this.columnCount))
+          console.log(this.state.slice(row * this.columnCount, row * this.columnCount + this.columnCount))
         }
       }
 
@@ -211,7 +227,7 @@
       }
 
       update() {
-        let cells = [...this.state.cells]; // shallow clone
+        let cells = [...this.state]; // shallow clone
 
         // find next position
         let newSnakeHeadIndex;
@@ -277,47 +293,37 @@
         // draw the snaaake
         this.snake.position.forEach(index => cells[index] = 1);
 
-        // update state
-        this.setState({ cells });
+        // update display
+        this.render(cells);
       }
 
+      render(nextState) {
+        // get diff between current state/next state
+        let diffIndices = this.state.reduce((accumulator, currentValue, index) => {
+          let nextValue = nextState[index]
+          if (nextValue !== currentValue) {
+            accumulator.push(index);
+          }
+          return accumulator;
+        }, []);
 
-      render() {
-        return html`<div class="game">
-              <${Board} cells=${this.state.cells} />
-              <${Scoreboard} score=${this.score} />
-          </div>`;
+        // update DOM references
+        diffIndices.forEach(index => this.gridRef[index].classList = this.valueMap[nextState[index]]);
+
+        // set the next state as current state
+        this.state = nextState;
       }
     };
 
-    const Board = props => {
-      const colorMap = {
-        0: 'black',
-        1: 'green',
-        2: 'red'
-      };
-
-      return html`<section class="board">
-                    ${props.cells.map((value, index) => html`
-                        <${Cell} color=${colorMap[value]} />
-                    `)}
-                </section>`;
-    };
-
-    const Cell = props => {
-      return html`<div class="cell ${props.color}" />`;
-    };
-
-    const Scoreboard = props => {
-      return html`<div class="scoreboard">${props.score}</div>`;
-    }
-
-    render(html`<${Game} />`, document.body);
+    new Game()
   </script>
 </head>
 
 <body>
-
+  <div class="game">
+    <section class="board"></section>
+    <section class="scoreboard"></section>
+  </div>
 </body>
 
 </html>
