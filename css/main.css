@@ -49,6 +49,10 @@ body {
     background-color: red;
 }
 
+.debug {
+    background-color: lightskyblue;
+}
+
 @keyframes snakehead {
     from {
         transform: scale(1.5);

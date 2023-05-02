@@ -8,44 +8,54 @@ class Grid {
         this.rows = rows;
         this.columns = columns;
 
-        // set up grid in DOM here
-        // set initial board state as empty
-        this.displayState = Array(rows * columns).fill(null);
+        // set up 2D array to use as data store for game logic & display
+        this.displayState = Array(rows).fill().map(_ => Array(columns).fill());
 
         // set up DOM references
+        this.gridRef = Array(rows).fill().map(_ => Array(columns).fill());
+
         let boardRef = document.querySelector('#grid');
-        this.gridRef = [];
 
-        this.displayState.forEach(index => {
-            // create a DOM node for each element in the backing array
-            let node = document.createElement('div');
+        this.displayState.forEach((row, x) => {
+            row.forEach((column, y) => {
+                // create a DOM node for each element in the backing array
+                let node = document.createElement('div');
 
-            // For games that use the mouse, set a `data-index` attribute
-            // to easily reference the clicked node
-            node.dataset.index = index;
+                // For games that use the mouse, set `data-` attributes
+                // to easily reference the clicked node
+                node.dataset.x = x;
+                node.dataset.y = y;
 
-            // save a reference to the node, so it can be quickly updated later
-            this.gridRef.push(node);
+                // save a reference to the node, so it can be quickly updated later
+                // NOTE: this is reversed, so we can manipulate our backing
+                // 2D array in a more natural way (x,y) and have it displayed as expected
+                this.gridRef[y][x] = node;
 
-            // add the node to the actual page
-            boardRef.appendChild(node);
+                // add the node to the actual page
+                boardRef.appendChild(node);
+            });
         });
     }
 
     render(nextDisplayState) {
-        // get diff between current state/next state
-        let diffIndices = this.displayState.reduce((accumulator, currentValue, index) => {
-            let nextValue = nextDisplayState[index]
-            if (nextValue !== currentValue) {
-                accumulator.push(index);
-            }
-            return accumulator;
-        }, []);
+        // enumerate through the current/new display state arrays to update the changed values
+        this.displayState.forEach((row, x) => {
+            row.forEach((column, y) => {
+                if (this.displayState[x][y] === nextDisplayState[x][y]) {
+                    return;
+                }
 
-        // update DOM references
-        diffIndices.forEach(index => this.gridRef[index].classList = this.cssClassMap[nextDisplayState[index]]);
+                // update the CSS class of the cell 
+                this.gridRef[x][y].classList = this.cssClassMap[nextDisplayState[x][y]];
+            });
+        });
 
         // set the next state as current state
         this.displayState = nextDisplayState;
+    }
+
+    // Returns a new object with the same structure/values as the current display state
+    displayStateCopy() {
+        return JSON.parse(JSON.stringify(this.displayState));
     }
 }

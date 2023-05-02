@@ -5,13 +5,16 @@
   <script src="grid.js"></script>
   <script>
     /**
-     * todo: high score,
+     * todo: high score, backed by localStorage
      * 
      * handle a variable game tick speed; set update loop at max speed (e.g. 16ms)
      * keep track of ms since last tick completion; 
      * `const now = performance.now();`
      * `if (now - prevTime < desiredUpdateDuration) return;`
      * `prevTime = now`
+     * 
+     * experiment with a 2D array; might make aspects of the games simpler?
+     * enumerating the state diff might be slightly more complicated
      */
 
     class Game extends Grid {
@@ -25,7 +28,8 @@
       cssClassMap = {
         0: 'empty',
         1: 'snake',
-        2: 'apple'
+        2: 'apple',
+        3: 'debug'
       };
 
       constructor() {
@@ -34,19 +38,30 @@
 
         super(rows, columns);
 
-        let nextState = [...this.displayState];
+        let nextState = this.displayStateCopy();
 
         // set initial background
-        nextState.fill(0);
+        nextState.forEach((row, x) => {
+          row.forEach((column, y) => {
+            nextState[x][y] = 0;
+          });
+        });
 
         // set up initial snake position
         this.snake = {
-          position: [1275, 1274, 1273, 1272],
+          position: [
+            { x: 25, y: 25 }, // this is the "head" of the snake
+            { x: 24, y: 25 },
+            { x: 23, y: 25 },
+            { x: 22, y: 25 }
+          ],
           direction: 'right'
         };
 
         // draw the snaaake
-        this.snake.position.forEach(index => nextState[index] = 1);
+        this.snake.position.forEach(point => {
+          nextState[point.x][point.y] = this.SNAKE;
+        });
 
         // create some random APPLES
         for (let i = 0; i < 10; i += 1) {
@@ -73,15 +88,21 @@
       }
 
       makeApple(cells) {
-        let rando = Math.floor(Math.random() * this.columns * this.rows);
+        let point = {
+          x: Math.floor(Math.random() * this.rows),
+          y: Math.floor(Math.random() * this.columns)
+        };
 
         // if the random spot is not empty, choose another until it _is_ empty
-        while (cells[rando] !== this.EMPTY) {
-          rando = Math.floor(Math.random() * this.columns * this.rows);
+        while (cells[point.x][point.y] !== this.EMPTY) {
+          point = {
+            x: Math.floor(Math.random() * this.rows),
+            y: Math.floor(Math.random() * this.columns)
+          };
         }
 
         // place the apple
-        cells[rando] = this.APPLE;
+        cells[point.x][point.y] = this.APPLE;
 
         return cells;
       }
@@ -163,37 +184,48 @@
       }
 
       update() {
-        let cells = [...this.displayState]; // shallow clone
+        let cells = this.displayStateCopy();
 
         // find next position
-        let newSnakeHeadIndex;
+        let newSnakeHead = {
+          x: this.snake.position[0].x,
+          y: this.snake.position[0].y
+        };
 
         switch (this.snake.direction) {
           case 'right':
-            newSnakeHeadIndex = this.snake.position[0] + 1;
+            newSnakeHead.x += 1;
             break;
           case 'left':
-            newSnakeHeadIndex = this.snake.position[0] - 1;
+            newSnakeHead.x -= 1;
             break;
           case 'up':
-            newSnakeHeadIndex = this.snake.position[0] - this.columns;
+            newSnakeHead.y -= 1;
             break;
           case 'down':
-            newSnakeHeadIndex = this.snake.position[0] + this.columns;
+            newSnakeHead.y += 1;
             break;
         }
 
-        // handle screen wrap
-        if (newSnakeHeadIndex > this.rows * this.columns) {
-          newSnakeHeadIndex -= this.rows * this.columns;
+        // handle screen wrap 
+        if (newSnakeHead.x < 0) {
+          newSnakeHead.x = this.rows - 1;
         }
 
-        if (newSnakeHeadIndex < 0) {
-          newSnakeHeadIndex += this.rows * this.columns;
+        if (newSnakeHead.x > this.rows - 1) {
+          newSnakeHead.x = 0;
+        }
+
+        if (newSnakeHead.y < 0) {
+          newSnakeHead.y = this.columns - 1;
+        }
+
+        if (newSnakeHead.y > this.columns - 1) {
+          newSnakeHead.y = 0;
         }
 
         // check for body collision
-        if (cells[newSnakeHeadIndex] === this.SNAKE) {
+        if (cells[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
           window.alert('u lose');
 
           // stop the update loop
@@ -203,13 +235,15 @@
         }
 
         // clear snake's current position
-        this.snake.position.forEach(index => cells[index] = this.EMPTY);
+        this.snake.position.forEach(point => {
+          cells[point.x][point.y] = this.EMPTY
+        });
 
         // check for apple collision
-        if (cells[newSnakeHeadIndex] === this.APPLE) {
+        if (cells[newSnakeHead.x][newSnakeHead.y] === this.APPLE) {
           // if the snake eats an apple, turn the apple into the new "head"
           // so the snake grows
-          this.snake.position.unshift(newSnakeHeadIndex);
+          this.snake.position.unshift(newSnakeHead);
 
           this.updateScore(1);
 
@@ -223,11 +257,13 @@
           }
 
           // finally, move the head
-          this.snake.position[0] = newSnakeHeadIndex;
+          this.snake.position[0] = newSnakeHead;
         }
 
         // draw the snaaake
-        this.snake.position.forEach(index => cells[index] = this.SNAKE);
+        this.snake.position.forEach(point => {
+          cells[point.x][point.y] = this.SNAKE
+        });
 
         // update display
         this.render(cells);
