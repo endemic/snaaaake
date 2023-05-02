@@ -45,8 +45,8 @@
 
     .snake {
       background-color: limegreen;
-      animation-duration: 250ms;
-      animation-name: snakehead;
+      /* animation-duration: 250ms;
+      animation-name: snakehead; */
     }
 
     .apple {
@@ -67,13 +67,7 @@
   <script type="module">
 
     /**
-     * todo: high score, get rid of Preact?
-     * 
-     * to get rid of preact, we could have a "current" grid state, and "new" grid state
-     * then have a simple "draw" function that diffs the two in order to determine
-     * which DOM elements need to have a class added/removed
-     * could have an object in scope that translates numeric values in the grid array
-     * to CSS classes; the naming could represent what the cell contents actually are
+     * todo: high score,
      * 
      * handle a variable game tick speed; set update loop at max speed (e.g. 16ms)
      * keep track of ms since last tick completion; 
@@ -132,6 +126,7 @@
         this.render(nextState);
 
         this.score = 0;
+        this.renderScore();
 
         // bind context variable to the current Game() object
         // for each of these global handlers/interval
@@ -288,6 +283,7 @@
           this.snake.position.unshift(newSnakeHeadIndex);
 
           this.score += 1;
+          this.renderScore();
 
           // make a new apple
           cells = this.makeApple(cells);
@@ -307,6 +303,10 @@
 
         // update display
         this.render(cells);
+      }
+
+      renderScore() {
+        document.querySelector('.scoreboard').textContent = this.score;
       }
 
       render(nextState) {
