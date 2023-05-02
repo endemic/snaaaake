@@ -69,12 +69,30 @@ class Game extends Grid {
         window.addEventListener('touchend', this.onTouchEnd.bind(this));
 
         // update loop
-        this.interval = window.setInterval(this.update.bind(this), 50);
+        this.interval = window.setInterval(this.update.bind(this), 30);
 
         // these values allow us to speed up the game slightly every
         // time a player collects an apple
         this.previousTime = performance.now();
-        this.updateSpeedInMs = 180;
+        this.updateSpeedInMs = 150;
+
+        // initialize high score list if necessary
+        if (!localStorage.getItem('highScores')) {
+            localStorage.setItem('highScores',
+                JSON.stringify(
+                    Array(5).fill({ score: 0, timestamp: 0 })
+                )
+            );
+        }
+
+        const highScores = JSON.parse(localStorage.getItem('highScores'));
+
+        // populate high score list
+        document.querySelector('#high_scores').innerHTML = `<ol>
+        ${highScores.map(({ score, timestamp }) => {
+            return `<li>${score} &mdash; ${new Date(timestamp).toLocaleString()}</li>`;
+        })}
+        </ol>`;
     }
 
     makeApple(displayState) {
@@ -169,7 +187,7 @@ class Game extends Grid {
         const now = performance.now();
 
         // if not enough time has passed since the previous update, then do nothing
-        if (now - this.previousTime < this.updateSpeedInMs) {
+        if ((now - this.previousTime) < this.updateSpeedInMs) {
             return;
         }
 
@@ -219,8 +237,27 @@ class Game extends Grid {
         if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
             window.alert('u lose');
 
+            // load high scores from local storage; they're stored as a stringified array
+            let highScores = JSON.parse(localStorage.getItem('highScores'));
+
+            // TODO: just push obj on to `highScores` array then call Array.sort()
+            let insertIndex = highScores.findIndex(({ score, timestamp }) => {
+                return this.score >= score;
+            });
+
+            // sorted insert, w/ date
+            highScores.splice(insertIndex, 1, { score: this.score, timestamp: Date.now() });
+
+            // only save top 5
+            highScores = highScores.slice(0, 4);
+
+            // save high scores
+            localStorage.setItem('highScores', JSON.stringify(highScores));
+
             // stop the update loop
             clearInterval(this.interval);
+
+            // TODO: unset the keyboard/touch handlers; display menu
 
             return;
         }
@@ -238,7 +275,9 @@ class Game extends Grid {
 
             this.updateScore(1);
 
-            this.updateSpeedInMs -= 10;
+            this.updateSpeedInMs -= 5;
+
+            console.log(`update speed: ${this.updateSpeedInMs}`);
 
             // make a new apple
             nextDisplayState = this.makeApple(nextDisplayState);

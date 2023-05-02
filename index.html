@@ -2,15 +2,31 @@
 <html>
 
 <head>
-    <title>SNAAAAKE</title>
+  <script src="scripts/grid.js"></script>
+  <script src="scripts/snake.js"></script>
+
+  <link rel="stylesheet" href="stylesheets/main.css">
 </head>
 
 <body>
-    <marquee>
+  <main>
+    <section id="grid">
+      <section id="scoreboard"></section>
+      <section id="menu">
+        <!-- show game title, high scores, "play" button here -->
         <h1>SNAAAAKE</h1>
-    </marquee>
 
-    <a href="game.html" title="Play the game">Play</a>
+        <h2>High Scores</h2>
+
+        <section id="high_scores"></section>
+
+        <button id="play">PLAY</button>
+      </section>
+    </section>
+  </main>
 </body>
+<script>
+  new Game()
+</script>
 
 </html>
