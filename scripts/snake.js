@@ -1,14 +1,5 @@
 /**
  * todo: high score, backed by localStorage
- * 
- * handle a variable game tick speed; set update loop at max speed (e.g. 16ms)
- * keep track of ms since last tick completion; 
- * `const now = performance.now();`
- * `if (now - prevTime < desiredUpdateDuration) return;`
- * `prevTime = now`
- * 
- * experiment with a 2D array; might make aspects of the games simpler?
- * enumerating the state diff might be slightly more complicated
  */
 
 class Game extends Grid {
@@ -35,11 +26,11 @@ class Game extends Grid {
         let nextState = this.displayStateCopy();
 
         // set initial background
-        nextState.forEach((row, x) => {
-            row.forEach((column, y) => {
+        for (let x = 0; x < this.columns; x += 1) {
+            for (let y = 0; y < this.rows; y += 1) {
                 nextState[x][y] = 0;
-            });
-        });
+            }
+        }
 
         // set up initial snake position
         this.snake = {
@@ -53,8 +44,8 @@ class Game extends Grid {
         };
 
         // draw the snaaake
-        this.snake.position.forEach(point => {
-            nextState[point.x][point.y] = this.SNAKE;
+        this.snake.position.forEach(({ x, y }) => {
+            nextState[x][y] = this.SNAKE;
         });
 
         // create some random APPLES
@@ -86,24 +77,18 @@ class Game extends Grid {
         this.updateSpeedInMs = 180;
     }
 
-    makeApple(cells) {
-        let point = {
-            x: Math.floor(Math.random() * this.rows),
-            y: Math.floor(Math.random() * this.columns)
-        };
+    makeApple(displayState) {
+        let point = this.randomPoint();
 
         // if the random spot is not empty, choose another until it _is_ empty
-        while (cells[point.x][point.y] !== this.EMPTY) {
-            point = {
-                x: Math.floor(Math.random() * this.rows),
-                y: Math.floor(Math.random() * this.columns)
-            };
+        while (displayState[point.x][point.y] !== this.EMPTY) {
+            point = this.randomPoint();
         }
 
         // place the apple
-        cells[point.x][point.y] = this.APPLE;
+        displayState[point.x][point.y] = this.APPLE;
 
-        return cells;
+        return displayState;
     }
 
     ArrowLeft() {
@@ -134,12 +119,6 @@ class Game extends Grid {
         }
     }
 
-    dumpState() {
-        for (let row = 0; row < this.rows; row += 1) {
-            console.log(this.state.slice(row * this.columns, row * this.columns + this.columns))
-        }
-    }
-
     onKeyDown(event) {
         // If the `Game` component has a defined method that
         // is equal to the name of the pressed key...
@@ -151,14 +130,18 @@ class Game extends Grid {
         }
     }
 
-    onTouchStart(e) {
+    onTouchStart(event) {
+        event.preventDefault();
+
         // store where the player first touched the screen
-        this.currentTouch = e.changedTouches[0];  // only care about the first touch
+        this.currentTouch = event.changedTouches[0];  // only care about the first touch
     }
 
-    onTouchEnd(e) {
+    onTouchEnd(event) {
+        event.preventDefault();
+
         // store local ref to last touch
-        const endTouch = e.changedTouches[0];
+        const endTouch = event.changedTouches[0];
 
         let xDiff = endTouch.clientX - this.currentTouch.clientX;
         let yDiff = endTouch.clientY - this.currentTouch.clientY;
@@ -192,7 +175,7 @@ class Game extends Grid {
 
         this.previousTime = now;
 
-        let cells = this.displayStateCopy();
+        let nextDisplayState = this.displayStateCopy();
 
         // find next position
         let newSnakeHead = {
@@ -233,7 +216,7 @@ class Game extends Grid {
         }
 
         // check for body collision
-        if (cells[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
+        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
             window.alert('u lose');
 
             // stop the update loop
@@ -243,12 +226,12 @@ class Game extends Grid {
         }
 
         // clear snake's current position
-        this.snake.position.forEach(point => {
-            cells[point.x][point.y] = this.EMPTY
+        this.snake.position.forEach(({ x, y }) => {
+            nextDisplayState[x][y] = this.EMPTY
         });
 
         // check for apple collision
-        if (cells[newSnakeHead.x][newSnakeHead.y] === this.APPLE) {
+        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.APPLE) {
             // if the snake eats an apple, turn the apple into the new "head"
             // so the snake grows
             this.snake.position.unshift(newSnakeHead);
@@ -258,10 +241,10 @@ class Game extends Grid {
             this.updateSpeedInMs -= 10;
 
             // make a new apple
-            cells = this.makeApple(cells);
+            nextDisplayState = this.makeApple(nextDisplayState);
         } else {
             // otherwise, shift the whole snake body
-            for (let i = this.snake.position.length - 1; i >= 1; i -= 1) {
+            for (let i = this.snake.position.length - 1; i > 0; i -= 1) {
                 // give each body segment the position of the one before it
                 this.snake.position[i] = this.snake.position[i - 1];
             }
@@ -271,12 +254,12 @@ class Game extends Grid {
         }
 
         // draw the snaaake
-        this.snake.position.forEach(point => {
-            cells[point.x][point.y] = this.SNAKE
+        this.snake.position.forEach(({ x, y }) => {
+            nextDisplayState[x][y] = this.SNAKE
         });
 
         // update display
-        this.render(cells);
+        this.render(nextDisplayState);
     }
 
     updateScore(val) {
