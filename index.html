@@ -1,0 +1,230 @@
+<html>
+
+<head>
+  <style>
+    .board {
+      display: grid;
+      aspect-ratio: 1;
+      width: 50%;
+      grid-template-rows: repeat(50, 1%);
+      grid-template-columns: repeat(50, 1%);
+      /* The repeat() notation accepts 2 arguments: the first represents the number of times the defined tracks should repeat, and the second is the track definition. */
+    }
+
+    .cell {
+      border: 1px solid black;
+      border-top: 0;
+      border-left: 0;
+      box-sizing: border-box;
+    }
+
+    .cell.black {
+      background-color: black;
+    }
+
+    .cell.green {
+      background-color: limegreen;
+    }
+
+    .cell.red {
+      background-color: red;
+    }
+
+  </style>
+  <script type="module">
+    import { h, Component, render } from 'https://unpkg.com/preact?module';
+    import htm from 'https://unpkg.com/htm?module';
+
+    // Initialize htm with Preact
+    const html = htm.bind(h);
+
+    class Game extends Component {
+
+      constructor(props) {
+        super(props);
+
+        this.rowCount = 50;
+        this.columnCount = 50;
+
+        let cells = Array(this.rowCount * this.columnCount).fill(0);
+
+        this.snake = {
+          position: [1275, 1274, 1273, 1272],
+          direction: 'right'
+        };
+
+        // draw the snaaake
+        this.snake.position.forEach(index => cells[index] = 1);
+
+        // create some random APPLES
+        for (let i = 0; i < 10; i += 1) {
+          cells = this.makeApple(cells);
+        }
+
+        // set initial state
+        this.state = { cells };
+
+        // bind context variable to the current object
+        this.update = this.update.bind(this);
+        this.onKeyDown = this.onKeyDown.bind(this);
+
+        // bind global keyboard handler
+        window.addEventListener('keydown', this.onKeyDown);
+
+        // update loop every second
+        this.interval = setInterval(this.update, 100);
+      }
+
+      makeApple(cells) {
+        let rando = Math.floor(Math.random() * this.columnCount * this.rowCount);
+
+        // ensure placement in empty spot
+        while (cells[rando] !== 0) {
+          rando = Math.floor(Math.random() * this.columnCount * this.rowCount);
+        }
+
+        // place the apple
+        cells[rando] = 2;
+
+        return cells;
+      }
+
+      ArrowLeft() {
+        console.log('left arrow pressed; TODO something?');
+        // can't go left if currently going right
+
+        this.snake.direction = 'left';
+      }
+
+      ArrowRight() {
+        console.log('right arrow pressed; TODO something?');
+
+        this.snake.direction = 'right';
+      }
+
+      ArrowUp() {
+        console.log('up arrow pressed; TODO something?');
+
+        this.snake.direction = 'up';
+      }
+
+      ArrowDown() {
+        console.log('down arrow pressed; TODO something?');
+
+        this.snake.direction = 'down';
+      }
+
+      dumpState() {
+        for (let row = 0; row < this.rowCount; row += 1) {
+          // TODO: console.table?
+          console.log(this.state.cells.slice(row * this.columnCount, row * this.columnCount + this.columnCount))
+        }
+      }
+
+      onKeyDown(event) {
+        // If the `Game` component has a defined method that
+        // is equal to the name of the pressed key...
+        if (typeof this[event.key] === 'function') {
+          // fire that method
+          this[event.key]();
+
+          event.preventDefault();
+        }
+      }
+
+      update() {
+        let cells = [...this.state.cells]; // shallow clone
+
+        // clear snake's current position
+        this.snake.position.forEach(index => cells[index] = 0);
+
+        // find next position
+        let newSnakeHeadIndex;
+
+        switch (this.snake.direction) {
+          case 'right':
+            newSnakeHeadIndex = this.snake.position[0] + 1;
+            break;
+          case 'left':
+            newSnakeHeadIndex = this.snake.position[0] - 1;
+            break;
+          case 'up':
+            newSnakeHeadIndex = this.snake.position[0] - this.columnCount;
+            break;
+          case 'down':
+            newSnakeHeadIndex = this.snake.position[0] + this.columnCount;
+            break;
+        }
+
+        // TODO: check for body collision
+
+        // handle screen wrap
+        if (newSnakeHeadIndex > this.rowCount * this.columnCount) {
+          newSnakeHeadIndex -= this.rowCount * this.columnCount;
+        }
+
+        if (newSnakeHeadIndex < 0) {
+          newSnakeHeadIndex += this.rowCount * this.columnCount;
+        }
+
+        // check for apple collision
+        if (cells[newSnakeHeadIndex] === 2) {
+          // if the snake eats an apple, turn the apple into the new "head"
+          // so the snake grows
+          this.snake.position.unshift(newSnakeHeadIndex);
+
+          // make a new apple
+          cells = this.makeApple(cells);
+        } else {
+          // otherwise, shift the whole snake body
+          for (let i = this.snake.position.length - 1; i >= 1; i -= 1) {
+            // give each body segment the position of the one before it
+            this.snake.position[i] = this.snake.position[i - 1];
+          }
+
+          // finally, move the head
+          this.snake.position[0] = newSnakeHeadIndex;
+        }
+
+        // draw the snaaake
+        this.snake.position.forEach(index => cells[index] = 1);
+
+        // update state
+        this.setState({ cells });
+      }
+
+
+      render() {
+        return html`<div class="game">
+              <${Board} cells=${this.state.cells} onClick=${this.onClick} />
+          </div>`;
+      }
+    };
+
+    const Board = props => {
+      const colorMap = {
+        0: 'black',
+        1: 'green',
+        2: 'red'
+      };
+
+      return html`<section class="board">
+                    ${props.cells.map((value, index) => html`
+                        <${Cell} color=${colorMap[value]} />
+                    `)}
+                </section>`;
+    };
+
+    const Cell = props => {
+      return html`<div class="cell ${props.color}" />`;
+    };
+
+    render(html`<${Game} />`, document.body);
+  </script>
+</head>
+
+<body>
+
+</body>
+
+</html>
