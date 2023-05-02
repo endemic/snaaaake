@@ -4,7 +4,7 @@ body {
     padding: 0;
 }
 
-.board {
+#grid {
     display: grid;
     aspect-ratio: 1;
     width: 50%;
@@ -28,7 +28,7 @@ body {
     top: 0;
 }
 
-.board>div {
+#grid>div {
     border: 1px solid black;
     border-top: 0;
     border-left: 0;

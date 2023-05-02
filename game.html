@@ -2,9 +2,8 @@
 <html>
 
 <head>
-
-  <script type="module">
-
+  <script src="grid.js"></script>
+  <script>
     /**
      * todo: high score,
      * 
@@ -15,34 +14,20 @@
      * `prevTime = now`
      */
 
-    class Game {
+    class Game extends Grid {
+      cssClassMap = {
+        0: 'empty',
+        1: 'snake',
+        2: 'apple'
+      };
+
       constructor() {
-        // our grid contains simple integers to represent game objects;
-        // this map translates the numbers to a string, that can then be used as
-        // human-readable reference or CSS class (for display purposes)
-        this.valueMap = {
-          0: 'empty',
-          1: 'snake',
-          2: 'apple'
-        };
+        const rows = 50;
+        const columns = 50;
 
-        this.rowCount = 50;
-        this.columnCount = 50;
+        super(rows, columns);
 
-        // set initial board state as empty
-        this.state = Array(this.rowCount * this.columnCount).fill(null);
-
-        // set up DOM references
-        let boardRef = document.querySelector('section.board');
-        this.gridRef = [];
-
-        this.state.forEach(i => {
-          let node = document.createElement('div');
-          this.gridRef.push(node);
-          boardRef.appendChild(node);
-        });
-
-        let nextState = [...this.state];
+        let nextState = [...this.displayState];
 
         // set initial background
         nextState.fill(0);
@@ -66,7 +51,7 @@
 
         this.updateScore(0);
 
-        // bind context variable to the current Game() object
+        // bind context variable (this) to the current Game() object
         // for each of these global handlers/interval
 
         // add global keyboard handler
@@ -81,11 +66,11 @@
       }
 
       makeApple(cells) {
-        let rando = Math.floor(Math.random() * this.columnCount * this.rowCount);
+        let rando = Math.floor(Math.random() * this.columns * this.rows);
 
         // ensure placement in empty spot
         while (cells[rando] !== 0) {
-          rando = Math.floor(Math.random() * this.columnCount * this.rowCount);
+          rando = Math.floor(Math.random() * this.columns * this.rows);
         }
 
         // place the apple
@@ -124,9 +109,8 @@
       }
 
       dumpState() {
-        for (let row = 0; row < this.rowCount; row += 1) {
-          // TODO: console.table?
-          console.log(this.state.slice(row * this.columnCount, row * this.columnCount + this.columnCount))
+        for (let row = 0; row < this.rows; row += 1) {
+          console.log(this.state.slice(row * this.columns, row * this.columns + this.columns))
         }
       }
 
@@ -173,7 +157,7 @@
       }
 
       update() {
-        let cells = [...this.state]; // shallow clone
+        let cells = [...this.displayState]; // shallow clone
 
         // find next position
         let newSnakeHeadIndex;
@@ -186,20 +170,20 @@
             newSnakeHeadIndex = this.snake.position[0] - 1;
             break;
           case 'up':
-            newSnakeHeadIndex = this.snake.position[0] - this.columnCount;
+            newSnakeHeadIndex = this.snake.position[0] - this.columns;
             break;
           case 'down':
-            newSnakeHeadIndex = this.snake.position[0] + this.columnCount;
+            newSnakeHeadIndex = this.snake.position[0] + this.columns;
             break;
         }
 
         // handle screen wrap
-        if (newSnakeHeadIndex > this.rowCount * this.columnCount) {
-          newSnakeHeadIndex -= this.rowCount * this.columnCount;
+        if (newSnakeHeadIndex > this.rows * this.columns) {
+          newSnakeHeadIndex -= this.rows * this.columns;
         }
 
         if (newSnakeHeadIndex < 0) {
-          newSnakeHeadIndex += this.rowCount * this.columnCount;
+          newSnakeHeadIndex += this.rows * this.columns;
         }
 
         // check for body collision
@@ -254,25 +238,7 @@
         document.querySelector('.scoreboard').textContent = this.score;
       }
 
-      render(nextState) {
-        // get diff between current state/next state
-        let diffIndices = this.state.reduce((accumulator, currentValue, index) => {
-          let nextValue = nextState[index]
-          if (nextValue !== currentValue) {
-            accumulator.push(index);
-          }
-          return accumulator;
-        }, []);
-
-        // update DOM references
-        diffIndices.forEach(index => this.gridRef[index].classList = this.valueMap[nextState[index]]);
-
-        // set the next state as current state
-        this.state = nextState;
-      }
     };
-
-    new Game()
   </script>
 
   <link rel="stylesheet" href="css/main.css">
@@ -280,9 +246,12 @@
 
 <body>
   <div class="game">
-    <section class="board"></section>
+    <section id="grid"></section>
     <section class="scoreboard"></section>
   </div>
 </body>
+<script>
+  new Game()
+</script>
 
 </html>
