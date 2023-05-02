@@ -83,8 +83,13 @@
         window.addEventListener('touchstart', this.onTouchStart.bind(this));
         window.addEventListener('touchend', this.onTouchEnd.bind(this));
 
-        // update loop every second
+        // update loop
         this.interval = window.setInterval(this.update.bind(this), 50);
+
+        // these values allow us to speed up the game slightly every
+        // time a player collects an apple
+        this.previousTime = performance.now();
+        this.updateSpeedInMs = 250;
       }
 
       makeApple(cells) {
@@ -184,6 +189,15 @@
       }
 
       update() {
+        const now = performance.now();
+
+        // if not enough time has passed since the previous update, then do nothing
+        if (now - this.previousTime < this.updateSpeedInMs) {
+          return;
+        }
+
+        this.previousTime = now;
+
         let cells = this.displayStateCopy();
 
         // find next position
@@ -246,6 +260,8 @@
           this.snake.position.unshift(newSnakeHead);
 
           this.updateScore(1);
+
+          this.updateSpeedInMs -= 10;
 
           // make a new apple
           cells = this.makeApple(cells);
