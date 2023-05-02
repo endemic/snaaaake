@@ -1,69 +1,8 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
 
-    .board {
-      display: grid;
-      aspect-ratio: 1;
-      width: 50%;
-      /* The repeat() notation accepts 2 arguments: the first represents the
-        number of times the defined tracks should repeat, and the second is 
-        the track definition. */
-      grid-template-rows: repeat(50, auto);
-      grid-template-columns: repeat(50, auto);
-
-      /* prevents scroll/drag */
-      touch-action: none;
-    }
-
-    .scoreboard {
-      border: 1px solid white;
-      color: white;
-      font-family: monospace;
-      font-weight: bold;
-      left: 0;
-      position: absolute;
-      top: 0;
-    }
-
-    .board>div {
-      border: 1px solid black;
-      border-top: 0;
-      border-left: 0;
-      box-sizing: border-box;
-    }
-
-    .empty {
-      background-color: black;
-    }
-
-    .snake {
-      background-color: limegreen;
-      /* animation-duration: 250ms;
-      animation-name: snakehead; */
-    }
-
-    .apple {
-      background-color: red;
-    }
-
-    @keyframes snakehead {
-      from {
-        transform: scale(1.5);
-      }
-
-      to {
-        transform: scale(1);
-      }
-    }
-
-  </style>
   <script type="module">
 
     /**
@@ -335,6 +274,8 @@
 
     new Game()
   </script>
+
+  <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
