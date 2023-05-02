@@ -11,10 +11,15 @@
     .board {
       display: grid;
       aspect-ratio: 1;
-      width: 50%;
-      grid-template-rows: repeat(50, 1%);
-      grid-template-columns: repeat(50, 1%);
-      /* The repeat() notation accepts 2 arguments: the first represents the number of times the defined tracks should repeat, and the second is the track definition. */
+      width: 100%;
+      /* The repeat() notation accepts 2 arguments: the first represents the
+        number of times the defined tracks should repeat, and the second is 
+        the track definition. */
+      grid-template-rows: repeat(50, auto);
+      grid-template-columns: repeat(50, auto);
+
+      /* prevents scroll/drag */
+      touch-action: none;
     }
 
     .scoreboard {
@@ -55,11 +60,22 @@
     const html = htm.bind(h);
 
     /**
-     * todo: points, high score, touch control
+     * todo: high score, get rid of Preact?
+     * 
+     * to get rid of preact, we could have a "current" grid state, and "new" grid state
+     * then have a simple "draw" function that diffs the two in order to determine
+     * which DOM elements need to have a class added/removed
+     * could have an object in scope that translates numeric values in the grid array
+     * to CSS classes; the naming could represent what the cell contents actually are
+     * 
+     * handle a variable game tick speed; set update loop at max speed (e.g. 16ms)
+     * keep track of ms since last tick completion; 
+     * `const now = performance.now();`
+     * `if (now - prevTime < desiredUpdateDuration) return;`
+     * `prevTime = now`
      */
 
     class Game extends Component {
-
       constructor(props) {
         super(props);
 
@@ -89,9 +105,15 @@
         // bind context variable to the current object
         this.update = this.update.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
+        this.onTouchStart = this.onTouchStart.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
 
         // bind global keyboard handler
         window.addEventListener('keydown', this.onKeyDown);
+
+        // handle touch events
+        window.addEventListener('touchstart', this.onTouchStart);
+        window.addEventListener('touchend', this.onTouchEnd);
 
         // update loop every second
         this.interval = setInterval(this.update, 50);
@@ -154,6 +176,37 @@
           this[event.key]();
 
           event.preventDefault();
+        }
+      }
+
+      onTouchStart(e) {
+        // store where the player first touched the screen
+        this.currentTouch = e.changedTouches[0];  // only care about the first touch
+      }
+
+      onTouchEnd(e) {
+        // store local ref to last touch
+        const endTouch = e.changedTouches[0];
+
+        let xDiff = endTouch.clientX - this.currentTouch.clientX;
+        let yDiff = endTouch.clientY - this.currentTouch.clientY;
+
+        // horizontal touch direction was greater
+        if (Math.abs(xDiff) > Math.abs(yDiff)) {
+          // user moved their finger (mostly) right
+          if (xDiff > 0) {
+            this.ArrowRight();
+          } else {
+            this.ArrowLeft();
+          }
+          // vertical touch direction was greater
+        } else {
+          // user moved their finger (mostly) down
+          if (yDiff > 0) {
+            this.ArrowDown();
+          } else {
+            this.ArrowUp();
+          }
         }
       }
 
@@ -231,7 +284,7 @@
 
       render() {
         return html`<div class="game">
-              <${Board} cells=${this.state.cells} onClick=${this.onClick} />
+              <${Board} cells=${this.state.cells} />
               <${Scoreboard} score=${this.score} />
           </div>`;
       }
