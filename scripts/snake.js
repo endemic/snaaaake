@@ -1,30 +1,16 @@
-class Game extends Grid {
-    // constants for representing game entities
-    EMPTY = 0;
-    SNAKE = 1;
-    APPLE = 2;
-
-    // translate those numbers back to human-readable format
-    // to use for styling
-    cssClassMap = {
-        0: 'empty',
-        1: 'snake',
-        2: 'apple',
-        3: 'debug'
-    };
-
+class Snake extends Grid {
     constructor() {
         const rows = 50;
         const columns = 50;
 
-        super(rows, columns);
+        super(50, 50);
 
-        let nextState = this.displayStateCopy();
+        let nextState = this.currentState;
 
         // set initial background
         for (let x = 0; x < this.columns; x += 1) {
             for (let y = 0; y < this.rows; y += 1) {
-                nextState[x][y] = this.EMPTY;
+                nextState[x][y] = 'empty';
             }
         }
 
@@ -41,7 +27,7 @@ class Game extends Grid {
 
         // draw the snaaake
         this.snake.position.forEach(({ x, y }) => {
-            nextState[x][y] = this.SNAKE;
+            nextState[x][y] = 'snake';
         });
 
         // create some random APPLES
@@ -78,12 +64,12 @@ class Game extends Grid {
     }
 
     reset() {
-        let nextState = this.displayStateCopy();
+        let nextState = this.currentState;
 
         // set initial background
         for (let x = 0; x < this.columns; x += 1) {
             for (let y = 0; y < this.rows; y += 1) {
-                nextState[x][y] = this.EMPTY;
+                nextState[x][y] = 'empty';
             }
         }
 
@@ -100,7 +86,7 @@ class Game extends Grid {
 
         // draw the snaaake
         this.snake.position.forEach(({ x, y }) => {
-            nextState[x][y] = this.SNAKE;
+            nextState[x][y] = 'snake';
         });
 
         // create some random APPLES
@@ -127,12 +113,12 @@ class Game extends Grid {
         let point = this.randomPoint();
 
         // if the random spot is not empty, choose another until it _is_ empty
-        while (displayState[point.x][point.y] !== this.EMPTY) {
+        while (displayState[point.x][point.y] !== 'empty') {
             point = this.randomPoint();
         }
 
         // place the apple
-        displayState[point.x][point.y] = this.APPLE;
+        displayState[point.x][point.y] = 'apple';
 
         return displayState;
     }
@@ -217,7 +203,7 @@ class Game extends Grid {
 
         this.previousTime = now;
 
-        let nextDisplayState = this.displayStateCopy();
+        let nextDisplayState = this.currentState;
 
         // find next position
         let newSnakeHead = {
@@ -258,17 +244,17 @@ class Game extends Grid {
         }
 
         // check for body collision
-        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.SNAKE) {
+        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === 'snake') {
             this.gameOver();
         }
 
         // clear snake's current position
         this.snake.position.forEach(({ x, y }) => {
-            nextDisplayState[x][y] = this.EMPTY
+            nextDisplayState[x][y] = 'empty'
         });
 
         // check for apple collision
-        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === this.APPLE) {
+        if (nextDisplayState[newSnakeHead.x][newSnakeHead.y] === 'apple') {
             // if the snake eats an apple, turn the apple into the new "head"
             // so the snake grows
             this.snake.position.unshift(newSnakeHead);
@@ -292,7 +278,7 @@ class Game extends Grid {
 
         // draw the snaaake
         this.snake.position.forEach(({ x, y }) => {
-            nextDisplayState[x][y] = this.SNAKE
+            nextDisplayState[x][y] = 'snake'
         });
 
         // update display
